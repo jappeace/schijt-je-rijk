@@ -1,1 +1,14 @@
 #+TITLE: Schijt je rijk
+
+* Instel scherm
++ Tijd kunnen opgeven, bereik tussen de 5 en 60 seconden.
++ Aantal vakjes/lootjes kunnen invullen
++ Aantal trekkingen??
+
+* Loting
++ Begin met het laten zien van een start knop, na een winnaar te hebben gekozen kom je hier weer op terug todat er aantal trekkingen zijn geweest
++ Koe mag niet 2x op hetzelfde lootje schijten
++ Weergave van het winnende nummer moet goed leesbaar zijn in de zaal
+  + Koe in het midden houden zodat de vakjes goed leesbaar zijn.
++ Achtergrond moet tenminste groen zijn.
+  + Voetbal veld zou beter zijn
