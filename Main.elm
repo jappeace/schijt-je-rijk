@@ -52,10 +52,10 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     let
-        w =
+        width =
             model.size.width
 
-        h =
+        height =
             model.size.height
 
         clrStart =
@@ -68,8 +68,10 @@ view model =
             [ ( 0.0, clrStart ), ( 1.0, clrEnd ) ]
 
         gfx =
-            collage w h 
-                [ gradient (linear ( 0, 0 ) ( toFloat w, toFloat h ) clrStops) (rect (toFloat w) (toFloat h)) ]
+            collage width height
+                [ gradient (linear ( 0, 0 ) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
+                Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500)))
+                ]
     in
   body [] [
     h1 [] [text "Schijt je rijk"], 
