@@ -13,5 +13,4 @@ css/reveal.min.css
 js/reveal.min.js
 
 *.js
-*.json
 elm-stuff
