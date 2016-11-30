@@ -8,6 +8,7 @@ import Html exposing (..)
 -- evancz/elm-graphics
 import Collage exposing (collage, gradient, rect, Form)
 import Element exposing (toHtml)
+import Transform
 
 -- elm-lang/window
 import Window exposing (..)
@@ -78,18 +79,12 @@ createLots amount =
   in
       flatMap (\row -> List.map (\col -> Lot (row * (scale+1) + col) row col) ranges ) ranges
 
-renderLot : Model -> Lot -> Form
-renderLot model lot = 
+renderLot : Lot -> Form
+renderLot lot = 
     let
-        scale = toFloat ((calcDimension model.count))
-        location = (
-          ((toFloat model.size.width-100.0) / scale) * ((toFloat lot.x)),
-          ((toFloat model.size.height-100.0) / scale) * (toFloat lot.y) 
-        )
-          
+        location = (toFloat lot.x, toFloat lot.y)
     in
-      Collage.move location
-      (Collage.text (Text.fromString (toString lot.id)))
+      Collage.move location (Collage.text (Text.fromString (toString lot.id)))
 
 render : Model -> Html Msg
 render model = 
@@ -108,21 +103,28 @@ render model =
 
         clrStops =
             [ ( 0.0, clrStart ), ( 1.0, clrEnd ) ]
-    in
-        toHtml (collage width height (
-            [gradient (linear (0, 0) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
-            Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500)))
-            ] ++
+        lots = 
+            Collage.groupTransform
+            (Transform.multiply 
+              (Transform.scaleX ((toFloat width) / (toFloat model.count)))
+              (Transform.scaleY ((toFloat height) / (toFloat model.count)))
+            )
             (List.filterMap 
               (\lot -> 
                 (
                   if lot.id > model.count then 
                     Maybe.Nothing
                   else 
-                    Maybe.Just (renderLot model lot))
+                    Maybe.Just (renderLot lot))
               ) 
               (createLots model.count)
             )
+    in
+        toHtml (collage width height (
+            [gradient (linear (0, 0) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
+            Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500)))
+            ] ++
+            [lots]
           )
         )
 
