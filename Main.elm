@@ -1,9 +1,10 @@
 -- elm-lang/core
 import Task
 import Color exposing (linear, rgb)
-
--- elm-lang/html
+import Random
 import Html exposing (..)
+import Html.Attributes
+import Html.Events
 
 -- evancz/elm-graphics
 import Collage exposing (collage, gradient, rect, Form)
@@ -44,17 +45,21 @@ main =
 
 type alias Model = 
     { size : Window.Size,
-      count : Int 
+      count : Int ,
+      inLottery : Bool,
+      winningLot : Maybe Int
     }
 
 init : ( Model, Cmd Msg )
 init =
-    (Model (Window.Size 0 0) 4, Task.perform (\x -> Resize x) Window.size )
+    (Model (Window.Size 0 0) 4 False Nothing, Task.perform (\x -> Resize x) Window.size )
 
 
 type Msg
     = Resize Window.Size
     | Fail
+    | StartLottery
+    | SelectWinningLot Int
 
 type alias Lot = {id:Int, x:Int, y:Int}
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,6 +69,11 @@ update msg model =
             ( {model | size = newSize}, Cmd.none )
         Fail ->
             ( model, Cmd.none )
+        StartLottery ->
+            ( {model | inLottery = True},  Random.generate SelectWinningLot (Random.int 1 model.count))
+        SelectWinningLot selected ->
+            ( {model | winningLot = Maybe.Just selected}, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -136,11 +146,25 @@ render model =
 
 view : Model -> Html Msg
 view model =
-  let
-      count = 40
-  in
+    let
+        visibility = if model.inLottery then "hidden" else "visible"
+    in
       body [] [
-        h1 [] [text "Schijt je rijk"], 
-        render model
+        h1 [] [text ("Schijt je rijk" )], 
+        render model,
+        button [
+          Html.Attributes.style [
+            ("position", "absolute"), 
+            ("left", "40%"), 
+            ("top", "40%"), 
+            ("width", "20%"),
+            ("height", "20%"),
+            ("font-size", "40pt"),
+            ("font-family", "Comic Sans, Comic Sans MS"),
+            ("visibility", visibility)
+          ],
+          Html.Events.onClick StartLottery
+        ] [text "Begin trekking!"],
+        text (Maybe.withDefault "" (Maybe.map toString model.winningLot))
       ]
   
