@@ -3,7 +3,7 @@ import Task
 import Color exposing (linear, rgb)
 import Random
 import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html.Attributes
 import Html.Events
 
 -- evancz/elm-graphics
@@ -15,10 +15,6 @@ import Transform
 import Window exposing (..)
 
 import Text
-
-import Style
-import Html.CssHelpers
-
 --join : List (List a) -> List a
 join =
   List.foldr (++) []
@@ -36,6 +32,7 @@ flatMap2 : (a -> b -> List c) -> List a -> List b -> List c
 flatMap2 f list1 list2 =
   List.map2 f list1 list2
     |> join
+
 main =
     program 
       { init = init
@@ -147,31 +144,27 @@ render model =
           )
         )
 
-
-{ id, class, classList } = Html.CssHelpers.withNamespace "schijt"
 view : Model -> Html Msg
 view model =
     let
         visibility = if model.inLottery then "hidden" else "visible"
     in
       body [] [
-        node "link" [
-          attribute "rel" "stylesheet",
-          attribute "property" "stylesheet",
-          attribute "href" Style.sheetFile
-        ] [],
         h1 [] [text ("Schijt je rijk" )], 
         render model,
-        div [
-          id Style.LotteryInteraction,
-          style [
+        button [
+          Html.Attributes.style [
+            ("position", "absolute"), 
+            ("left", "40%"), 
+            ("top", "40%"), 
+            ("width", "20%"),
+            ("height", "20%"),
+            ("font-size", "40pt"),
+            ("font-family", "Comic Sans, Comic Sans MS"),
             ("visibility", visibility)
-          ]
-        ] [
-          button [
-            Html.Events.onClick StartLottery
-          ] [text "Begin trekking!"],
-          text (Maybe.withDefault "" (Maybe.map toString model.winningLot))
-        ]
+          ],
+          Html.Events.onClick StartLottery
+        ] [text "Begin trekking!"],
+        text (Maybe.withDefault "" (Maybe.map toString model.winningLot))
       ]
   
