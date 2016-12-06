@@ -147,12 +147,12 @@ render model =
 view : Model -> Html Msg
 view model =
     let
-        visibility = if model.inLottery then "hidden" else "visible"
+        visibility = if model.inLottery then "none" else "block"
     in
       body [] [
         h1 [] [text ("Schijt je rijk" )], 
         render model,
-        button [
+        div [
           Html.Attributes.style [
             ("position", "absolute"), 
             ("left", "40%"), 
@@ -160,11 +160,20 @@ view model =
             ("width", "20%"),
             ("height", "20%"),
             ("font-size", "40pt"),
-            ("font-family", "Comic Sans, Comic Sans MS"),
-            ("visibility", visibility)
-          ],
-          Html.Events.onClick StartLottery
-        ] [text "Begin trekking!"],
-        text (Maybe.withDefault "" (Maybe.map toString model.winningLot))
+            ("font-family", "Comic Sans, Comic Sans MS")
+          ]
+        ] [
+          button [
+            Html.Events.onClick StartLottery,
+            Html.Attributes.style [
+              ("width", "100%"),
+              ("height", "100%"),
+              ("display", visibility),
+              ("font-size", "inherit"),
+              ("font-family", "inherit")
+            ]
+          ] [text "Begin trekking!"],
+          text (Maybe.withDefault "" (Maybe.map (\x -> "de winnaar is " ++ (toString x)) model.winningLot))
+        ]
       ]
   
