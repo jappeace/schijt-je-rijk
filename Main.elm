@@ -54,7 +54,7 @@ init =
       (Window.Size 0 0) 
       4 
       (inSeconds 0)
-      (inSeconds 10)
+      (inSeconds 10000)
       Nothing
       (Cow 0.5 (Vector 20.0 20.0) 0.3)
     ), 
@@ -85,8 +85,8 @@ update msg model =
             ( {model | remainingTime = model.lotteryDuration, winningLot = Nothing}, moveCow)
         PlayLottery (randomx, randomy) -> let
                 newCowPosition = (Vector 
-                    (model.cow.position.x + randomx) 
-                    (model.cow.position.y + randomy)
+                    (model.cow.position.x + (randomx-0.5)) 
+                    (model.cow.position.y + (randomy-0.5))
                   ) 
                 nextTask = if model.remainingTime > 0 then moveCow else message SelectWinner
             in
@@ -210,6 +210,13 @@ view model =
             ]
           ] [text "Begin trekking!"],
           text (Maybe.withDefault "" (Maybe.map (\x -> "de winnaar is " ++ (toString x)) model.winningLot))
+        ],
+       div [
+        Html.Attributes.style [
+          ("position", "absolute"), 
+          ("left", (toString (model.cow.position.x + 100))++ "px"),
+          ("top", (toString (model.cow.position.y + 100)) ++ "px")
         ]
+      ] [text "cow"]
       ]
   
