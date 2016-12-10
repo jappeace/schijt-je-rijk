@@ -15,24 +15,10 @@ import Transform
 import Window exposing (..)
 
 import Text
---join : List (List a) -> List a
-join =
-  List.foldr (++) []
 
+import Time exposing (..)
 
-{-|-}
---flatMap : (a -> List b) -> List a -> List b
-flatMap f list =
-  List.map f list
-    |> join
-
-
-{-|-}
-flatMap2 : (a -> b -> List c) -> List a -> List b -> List c
-flatMap2 f list1 list2 =
-  List.map2 f list1 list2
-    |> join
-
+import Support exposing (..)
 main =
     program 
       { init = init
@@ -44,24 +30,49 @@ main =
 -- Model
 
 type alias Model = 
-    { size : Window.Size,
+    { 
+      size : Window.Size,
       count : Int ,
-      inLottery : Bool,
-      winningLot : Maybe Int
+      remainingTime: Time,
+      lotteryDuration: Time,
+      winningLot : Maybe Int,
+      cow : Cow
     }
+type alias Cow =
+    {
+        speed : Float, -- tile/s
+        position : Vector,
+        rotation: Float
+    }
+type alias Vector = {x:Float, y:Float}
+tileSize = Vector 50 50
 
 init : ( Model, Cmd Msg )
 init =
-    (Model (Window.Size 0 0) 4 False Nothing, Task.perform (\x -> Resize x) Window.size )
+    (
+    (Model 
+      (Window.Size 0 0) 
+      4 
+      (inSeconds 0)
+      (inSeconds 10)
+      Nothing
+      (Cow 0.5 (Vector 20.0 20.0) 0.3)
+    ), 
+    Task.perform (\x -> Resize x) Window.size )
 
 
 type Msg
     = Resize Window.Size
     | Fail
     | StartLottery
-    | SelectWinningLot Int
+    | PlayLottery (Float, Float)
+    | Tick Time
+    | SelectWinner
 
 type alias Lot = {id:Int, x:Int, y:Int}
+moveCow = Random.generate PlayLottery (Random.pair 
+    (Random.float 0 1) (Random.float 0 1)
+  )
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -69,15 +80,41 @@ update msg model =
             ( {model | size = newSize}, Cmd.none )
         Fail ->
             ( model, Cmd.none )
+          
         StartLottery ->
-            ( {model | inLottery = True},  Random.generate SelectWinningLot (Random.int 1 model.count))
-        SelectWinningLot selected ->
-            ( {model | winningLot = Maybe.Just selected}, Cmd.none )
-
+            ( {model | remainingTime = model.lotteryDuration, winningLot = Nothing}, moveCow)
+        PlayLottery (randomx, randomy) -> let
+                newCowPosition = (Vector 
+                    (model.cow.position.x + randomx) 
+                    (model.cow.position.y + randomy)
+                  ) 
+                nextTask = if model.remainingTime > 0 then moveCow else message SelectWinner
+            in
+              ( {model | 
+                  cow = Cow 
+                    model.cow.speed 
+                    newCowPosition 
+                    model.cow.rotation
+                },  
+                  nextTask
+              )
+        Tick _ ->
+            ( {model | 
+                remainingTime = model.remainingTime - 1.0
+              }, 
+              Cmd.none 
+            )
+        SelectWinner ->
+            ({model | 
+                winningLot = Maybe.Just 1 -- TODO calulate where the cow's at and return that id
+              }, Cmd.none)
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [ Window.resizes Resize ]
+    Sub.batch [ 
+      Window.resizes Resize,  
+      Time.every second Tick
+    ]
 
 calcDimension : Int -> Int
 calcDimension amount = (ceiling (sqrt (toFloat amount))) - 1
@@ -92,10 +129,9 @@ createLots amount =
 renderLot : Model -> Lot -> Form
 renderLot model lot = 
     let
-        scale = toFloat ((calcDimension model.count))
         location = (
-          ((toFloat model.size.width) / scale) * ((toFloat lot.x)),
-          ((toFloat model.size.height) / scale) * (toFloat lot.y) 
+          tileSize.x * ((toFloat lot.x)),
+          tileSize.y * (toFloat lot.y) 
         )
           
     in
@@ -147,10 +183,10 @@ render model =
 view : Model -> Html Msg
 view model =
     let
-        visibility = if model.inLottery then "none" else "block"
+        visibility = if model.remainingTime > 0 then "none" else "block"
     in
       body [] [
-        h1 [] [text ("Schijt je rijk" )], 
+        h1 [] [text ("Schijt je rijk" ++ (toString model.remainingTime))], 
         render model,
         div [
           Html.Attributes.style [
@@ -164,7 +200,7 @@ view model =
           ]
         ] [
           button [
-            Html.Events.onClick StartLottery,
+            Html.Events.onClick (StartLottery),
             Html.Attributes.style [
               ("width", "100%"),
               ("height", "100%"),
