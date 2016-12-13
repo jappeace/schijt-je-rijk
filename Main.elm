@@ -35,7 +35,7 @@ type alias Model =
       count : Int ,
       remainingTime: Time,
       lotteryDuration: Time,
-      winningLot : Maybe Int,
+      winningLot : Maybe Lot,
       cow : Cow
     }
 type alias Cow =
@@ -45,14 +45,51 @@ type alias Cow =
         rotation: Float
     }
 type alias Vector = {x:Float, y:Float}
-tileSize = Vector 50 50
+tileScale = Vector 3 3
+tileSize = Vector 80 80
+screenTileSize = multiply tileSize tileScale
+worldDimensions: Int -> Vector
+worldDimensions lotCount =
+  let 
+    scale = toFloat (calcDimension lotCount)
+  in 
+    multiply tileSize (Vector scale scale)
+ 
+multiply : Vector -> Vector -> Vector
+multiply a b = apply (*) a b
+divide : Vector -> Vector -> Vector
+divide a b = apply (/) a b
 
+apply : (Float -> Float -> Float) -> Vector -> Vector -> Vector
+apply f vec oth = Vector (f vec.x oth.x) (f vec.y oth.y)
+applySingle : (Float -> Float) -> Vector -> Vector
+applySingle f vec = Vector (f vec.x) (f vec.y)
+modularf: Float -> Float -> Float
+modularf val bound = if val < 0 
+  then 
+    val + bound 
+  else (
+    if val > bound 
+      then 
+        val - bound 
+      else val
+  )
+-- wrap the vector around the given bounds
+modular: Vector -> Vector -> Vector
+modular bounds input = (apply (modularf) input bounds)
+cowposToLot : Int -> Vector -> Lot
+cowposToLot lotCount cowpos = 
+  let
+    worldDimSize = (calcDimension lotCount + 1)
+    lotCoords = applySingle (toFloat << floor) (divide (Vector (cowpos.x + (cowSize * 0.4) + tileSize.x) (cowpos.y+tileSize.y + (cowSize* 0.4))) tileSize)
+  in
+    Lot (worldDimSize * (floor lotCoords.x) + (floor lotCoords.y)) (floor lotCoords.x) (floor lotCoords.y)
 init : ( Model, Cmd Msg )
 init =
     (
     (Model 
       (Window.Size 0 0) 
-      4 
+      100 
       (inSeconds 0)
       (inSeconds 10000)
       Nothing
@@ -84,7 +121,7 @@ update msg model =
         StartLottery ->
             ( {model | remainingTime = model.lotteryDuration, winningLot = Nothing}, moveCow)
         PlayLottery (randomx, randomy) -> let
-                newCowPosition = (Vector 
+                newCowPosition = modular (worldDimensions model.count) (Vector 
                     (model.cow.position.x + (randomx-0.5)) 
                     (model.cow.position.y + (randomy-0.5))
                   ) 
@@ -106,7 +143,7 @@ update msg model =
             )
         SelectWinner ->
             ({model | 
-                winningLot = Maybe.Just 1 -- TODO calulate where the cow's at and return that id
+                winningLot = Maybe.Just (cowposToLot model.count model.cow.position)-- TODO calulate where the cow's at and return that id
               }, Cmd.none)
 
 subscriptions : Model -> Sub Msg
@@ -135,9 +172,12 @@ renderLot model lot =
         )
           
     in
-      Collage.move location
-      (Collage.text (Text.fromString (toString lot.id)))
+      Collage.scale 3
+      (Collage.move location
+      (Collage.text (Text.fromString (toString lot.id))))
 
+
+cowSize = 100
 render : Model -> Html Msg
 render model = 
     let
@@ -158,8 +198,8 @@ render model =
         lots = 
           Collage.groupTransform
           (Transform.multiply
-            (Transform.scale 0.8)
-            (Transform.translation ((toFloat (-width))/2) ((toFloat (-height))/2))
+            (Transform.scale 1)
+            (Transform.translation -model.cow.position.x -model.cow.position.y)
           )
           (List.filterMap 
               (\lot -> 
@@ -174,9 +214,10 @@ render model =
     in
         toHtml (collage width height (
             [gradient (linear (0, 0) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
-            Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500)))
-            ] ++
-            [lots]
+            Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500))),
+            lots,
+            (Collage.toForm (Element.image cowSize cowSize "img/cow.png"))
+            ]
           )
         )
 
@@ -186,13 +227,13 @@ view model =
         visibility = if model.remainingTime > 0 then "none" else "block"
     in
       body [] [
-        h1 [] [text ("Schijt je rijk" ++ (toString model.remainingTime))], 
+        h1 [] [text ("Schijt je rijk" ++ (toString model.remainingTime) ++ " -- cow pos" ++ (toString model.cow.position))], 
         render model,
         div [
           Html.Attributes.style [
             ("position", "absolute"), 
             ("left", "40%"), 
-            ("top", "40%"), 
+            ("top", "20%"), 
             ("width", "20%"),
             ("height", "20%"),
             ("font-size", "40pt"),
@@ -210,13 +251,6 @@ view model =
             ]
           ] [text "Begin trekking!"],
           text (Maybe.withDefault "" (Maybe.map (\x -> "de winnaar is " ++ (toString x)) model.winningLot))
-        ],
-       div [
-        Html.Attributes.style [
-          ("position", "absolute"), 
-          ("left", (toString (model.cow.position.x + 100))++ "px"),
-          ("top", (toString (model.cow.position.y + 100)) ++ "px")
         ]
-      ] [text "cow"]
       ]
   
