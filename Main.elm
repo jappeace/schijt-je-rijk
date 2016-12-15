@@ -19,6 +19,8 @@ import Text
 import Time exposing (..)
 
 import Support exposing (..)
+import Vector exposing (..)
+
 main =
     program 
       { init = init
@@ -44,7 +46,6 @@ type alias Cow =
         position : Vector,
         rotation: Float
     }
-type alias Vector = {x:Float, y:Float}
 tileScale = Vector 3 3
 tileSize = Vector 80 80
 screenTileSize = multiply tileSize tileScale
@@ -54,29 +55,6 @@ worldDimensions lotCount =
     scale = toFloat (calcDimension lotCount)
   in 
     multiply tileSize (Vector scale scale)
- 
-multiply : Vector -> Vector -> Vector
-multiply a b = apply (*) a b
-divide : Vector -> Vector -> Vector
-divide a b = apply (/) a b
-
-apply : (Float -> Float -> Float) -> Vector -> Vector -> Vector
-apply f vec oth = Vector (f vec.x oth.x) (f vec.y oth.y)
-applySingle : (Float -> Float) -> Vector -> Vector
-applySingle f vec = Vector (f vec.x) (f vec.y)
-modularf: Float -> Float -> Float
-modularf val bound = if val < 0 
-  then 
-    val + bound 
-  else (
-    if val > bound 
-      then 
-        val - bound 
-      else val
-  )
--- wrap the vector around the given bounds
-modular: Vector -> Vector -> Vector
-modular bounds input = (apply (modularf) input bounds)
 cowposToLot : Int -> Vector -> Lot
 cowposToLot lotCount cowpos = 
   let
@@ -97,7 +75,8 @@ init =
     ), 
     Task.perform (\x -> Resize x) Window.size )
 
-
+wanderRadius = Vector 20 20
+wanderTarget = Vector (cowSize/2) 0
 type Msg
     = Resize Window.Size
     | Fail
@@ -106,6 +85,12 @@ type Msg
     | Tick Time
     | SelectWinner
 
+toWorld : Float -> Vector -> Vector -> Vector
+toWorld agent_rotation agent_position target_position = 
+  Transform.multiply (
+    Transform.rotate agent_rotation
+    Transform.translate agent_position
+  )
 type alias Lot = {id:Int, x:Int, y:Int}
 moveCow = Random.generate PlayLottery (Random.pair 
     (Random.float 0 1) (Random.float 0 1)
@@ -121,6 +106,9 @@ update msg model =
         StartLottery ->
             ( {model | remainingTime = model.lotteryDuration, winningLot = Nothing}, moveCow)
         PlayLottery (randomx, randomy) -> let
+
+                transform =  
+                force =  (normalize (Vector randomx randomy))
                 newCowPosition = modular (worldDimensions model.count) (Vector 
                     (model.cow.position.x + (randomx-0.5)) 
                     (model.cow.position.y + (randomy-0.5))
@@ -250,7 +238,7 @@ view model =
               ("font-family", "inherit")
             ]
           ] [text "Begin trekking!"],
-          text (Maybe.withDefault "" (Maybe.map (\x -> "de winnaar is " ++ (toString x)) model.winningLot))
+          text (Maybe.withDefault "" (Maybe.map (\x -> "de winnaar is " ++ (toString x.id)) model.winningLot))
         ]
       ]
   
