@@ -5,7 +5,6 @@ import Random
 import Html exposing (..)
 import Html.Attributes
 import Html.Events
-
 -- evancz/elm-graphics
 import Collage exposing (collage, gradient, rect, Form)
 import Element exposing (toHtml)
@@ -20,7 +19,7 @@ import Time exposing (..)
 
 import Support exposing (..)
 import Vector exposing (..)
-
+import Transformation exposing (toWorldAround)
 main =
     program 
       { init = init
@@ -38,13 +37,16 @@ type alias Model =
       remainingTime: Time,
       lotteryDuration: Time,
       winningLot : Maybe Lot,
-      cow : Cow
+      cow : Cow,
+      lastTime: Time,
+      tpf: Time 
     }
 type alias Cow =
     {
-        speed : Float, -- tile/s
         position : Vector,
-        rotation: Float
+        force: Vector,
+        mass: Float,
+        wanderTarget: Vector 
     }
 tileScale = Vector 3 3
 tileSize = Vector 80 80
@@ -62,6 +64,7 @@ cowposToLot lotCount cowpos =
     lotCoords = applySingle (toFloat << floor) (divide (Vector (cowpos.x + (cowSize * 0.4) + tileSize.x) (cowpos.y+tileSize.y + (cowSize* 0.4))) tileSize)
   in
     Lot (worldDimSize * (floor lotCoords.x) + (floor lotCoords.y)) (floor lotCoords.x) (floor lotCoords.y)
+someVector = Vector 0.1 0.1
 init : ( Model, Cmd Msg )
 init =
     (
@@ -71,12 +74,14 @@ init =
       (inSeconds 0)
       (inSeconds 10000)
       Nothing
-      (Cow 0.5 (Vector 20.0 20.0) 0.3)
+      (Cow (Vector 20.0 20.0) someVector 0.0000001 someVector)
+      0.0
+      0.0
     ), 
     Task.perform (\x -> Resize x) Window.size )
 
-wanderRadius = Vector 20 20
-wanderTarget = Vector (cowSize/2) 0
+wanderRadius = Vector 30 30
+wanderTargetDistance = Vector (cowSize/4) 0
 type Msg
     = Resize Window.Size
     | Fail
@@ -84,17 +89,28 @@ type Msg
     | PlayLottery (Float, Float)
     | Tick Time
     | SelectWinner
+    | CowTick Time
 
-toWorld : Float -> Vector -> Vector -> Vector
-toWorld agent_rotation agent_position target_position = 
-  Transform.multiply (
-    Transform.rotate agent_rotation
-    Transform.translate agent_position
-  )
+jitter = 10
+nextWanderTarget: Cow -> Float -> Float -> Vector
+nextWanderTarget cow rx ry = multiply
+  wanderRadius
+  (normalize (plus 
+    (Vector (rx*jitter) (ry*jitter)) 
+    cow.wanderTarget
+  ))
+wander: Cow -> Float -> Float -> Vector
+wander cow rx ry = let
+    target = plus (nextWanderTarget cow rx ry) wanderTargetDistance
+    heading = (normalize cow.force)  
+  in
+    toWorldAround heading (perpendicular heading) cow.position target
+
 type alias Lot = {id:Int, x:Int, y:Int}
 moveCow = Random.generate PlayLottery (Random.pair 
-    (Random.float 0 1) (Random.float 0 1)
+    (Random.float (-1) 1) (Random.float (-1) 1)
   )
+maxspeed = 3.0
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -104,22 +120,20 @@ update msg model =
             ( model, Cmd.none )
           
         StartLottery ->
-            ( {model | remainingTime = model.lotteryDuration, winningLot = Nothing}, moveCow)
+            ( {model | remainingTime = model.lotteryDuration, winningLot = Nothing}, Cmd.none)
         PlayLottery (randomx, randomy) -> let
-
-                transform =  
-                force =  (normalize (Vector randomx randomy))
-                newCowPosition = modular (worldDimensions model.count) (Vector 
-                    (model.cow.position.x + (randomx-0.5)) 
-                    (model.cow.position.y + (randomy-0.5))
-                  ) 
-                nextTask = if model.remainingTime > 0 then moveCow else message SelectWinner
+                newTarget = wander model.cow randomx randomy
+                tpf = (Vector (model.tpf * model.tpf) (model.tpf * model.tpf))
+                velocity = (Vector.truncate maxspeed (multiply tpf (divide newTarget (Vector model.cow.mass model.cow.mass))))
+                newCowPosition = (plus model.cow.position velocity) 
+                nextTask = if model.remainingTime > 0 then Cmd.none else message SelectWinner
             in
               ( {model | 
-                  cow = Cow 
-                    model.cow.speed 
+                  cow = Cow
                     newCowPosition 
-                    model.cow.rotation
+                    velocity
+                    model.cow.mass
+                    (nextWanderTarget model.cow randomx randomy)
                 },  
                   nextTask
               )
@@ -129,6 +143,8 @@ update msg model =
               }, 
               Cmd.none 
             )
+        CowTick tpf ->
+            ({model | tpf = ((tpf - model.lastTime)/1000), lastTime = tpf}, if model.remainingTime > 0 then moveCow else Cmd.none)
         SelectWinner ->
             ({model | 
                 winningLot = Maybe.Just (cowposToLot model.count model.cow.position)-- TODO calulate where the cow's at and return that id
@@ -138,7 +154,8 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch [ 
       Window.resizes Resize,  
-      Time.every second Tick
+      Time.every second Tick,
+      Time.every (Time.second / 60) CowTick
     ]
 
 calcDimension : Int -> Int
@@ -215,7 +232,6 @@ view model =
         visibility = if model.remainingTime > 0 then "none" else "block"
     in
       body [] [
-        h1 [] [text ("Schijt je rijk" ++ (toString model.remainingTime) ++ " -- cow pos" ++ (toString model.cow.position))], 
         render model,
         div [
           Html.Attributes.style [
@@ -239,6 +255,10 @@ view model =
             ]
           ] [text "Begin trekking!"],
           text (Maybe.withDefault "" (Maybe.map (\x -> "de winnaar is " ++ (toString x.id)) model.winningLot))
-        ]
+        ],
+        h1 [] [text ("Schijt je rijk" ++ (toString model.remainingTime) ++ " -- cow pos" ++ (toString model.cow.position))],
+        h1 [] [text ("force " ++ (toString model.cow.force))],
+        h1 [] [text ("target" ++ (toString model.cow.wanderTarget))],
+        h1 [] [text ("time " ++ (toString model.tpf))]
       ]
   
