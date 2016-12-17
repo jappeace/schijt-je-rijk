@@ -54,10 +54,14 @@ update msg model =
             ( model, Cmd.none )
           
         StartLottery ->
-            ( {model | remainingTime = model.lotteryDuration, winningLot = Nothing}, Cmd.none)
+            ( {model | 
+                remainingTime = model.lotteryDuration, 
+                winningLot = Nothing,
+                runningLottery = True
+              }, Cmd.none)
         PlayLottery (randomx, randomy) -> let
                 newTarget = nextWanderTarget model.tpf model.cow.wanderTarget randomx randomy
-                force = wander newTarget model.cow.force model.cow.position
+                force = wander model.cow.position model.cow.velocity newTarget
                 tpf = (Vector (model.tpf * model.tpf) (model.tpf * model.tpf))
                 velocity = (Vector.truncate maxspeed 
                   (plus
@@ -68,11 +72,11 @@ update msg model =
                         (Vector model.cow.mass model.cow.mass)
                       )
                     )
-                    model.cow.force
+                    model.cow.velocity
                   )
                 )
                 newCowPosition = modular (worldDimensions model.count) (plus model.cow.position velocity) 
-                nextTask = if model.remainingTime > 0 then Cmd.none else message SelectWinner
+                runningLottery = model.remainingTime > 0
             in
               ( {model | 
                   cow = Cow
@@ -80,9 +84,10 @@ update msg model =
                     velocity
                     model.cow.mass
                     newTarget,
-                  rng = (Vector randomx randomy)
+                  rng = (Vector randomx randomy),
+                  runningLottery = runningLottery
                 },  
-                  nextTask
+                if runningLottery then Cmd.none else message SelectWinner
               )
         Tick _ ->
             ( {model | 
@@ -91,10 +96,15 @@ update msg model =
               Cmd.none 
             )
         CowTick tpf ->
-            ({model | tpf = ((tpf - model.lastTime)/1000), lastTime = tpf}, if model.remainingTime > 0 then moveCow else Cmd.none)
+            ({model | tpf = ((tpf - model.lastTime)/1000), lastTime = tpf}, if model.runningLottery then moveCow else Cmd.none)
         SelectWinner ->
             ({model | 
-                winningLot = Maybe.Just (cowposToLot model.count model.cow.position)-- TODO calulate where the cow's at and return that id
+                winningLot = Maybe.Just (cowposToLot model.count model.cow.position),
+                cow = Cow
+                  model.cow.position
+                  model.rng
+                  model.cow.mass
+                  model.cow.wanderTarget
               }, Cmd.none)
 
 subscriptions : Model -> Sub Msg
@@ -156,7 +166,7 @@ render model =
             [gradient (linear (0, 0) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
             Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500))),
             lots,
-            (Collage.rotate ((angle model.cow.force) + pi) (Collage.toForm (Element.image cowSize cowSize "img/cow.png")))
+            (Collage.rotate ((angle model.cow.velocity) + pi) (Collage.toForm (Element.image cowSize cowSize "img/cow.png")))
             ]
           )
         )
@@ -192,8 +202,8 @@ view model =
           text (Maybe.withDefault "" (Maybe.map (\x -> "de winnaar is " ++ (toString x.id)) model.winningLot))
         ],
         h1 [] [text ("Schijt je rijk" ++ (toString model.remainingTime) ++ " -- cow pos" ++ (toString model.cow.position))],
-        h1 [] [text ("force " ++ (toString model.cow.force))],
-        h1 [] [text ("angle " ++ (toString (((angle model.cow.force)*180) / pi)))],
+        h1 [] [text ("force " ++ (toString model.cow.velocity))],
+        h1 [] [text ("angle " ++ (toString (((angle model.cow.velocity)*180) / pi)))],
         h1 [] [text ("target" ++ (toString model.cow.wanderTarget))],
         h1 [] [text ("time " ++ (toString model.tpf))],
         h1 [] [text ("rng" ++ (toString model.rng))]

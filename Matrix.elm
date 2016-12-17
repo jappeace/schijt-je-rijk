@@ -26,7 +26,6 @@ transform matrix vector = Vector
   ((matrix.a1*vector.x) + (matrix.b1*vector.y) + (matrix.c1))
   ((matrix.a2*vector.x) + (matrix.b2*vector.y) + (matrix.c2))
 
-
 identity : Matrix
 identity = Matrix 
   1 0 0

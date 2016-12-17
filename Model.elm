@@ -16,12 +16,13 @@ type alias Model =
       cow : Cow,
       lastTime: Time,
       tpf: Time,
-      rng: Vector
+      rng: Vector,
+      runningLottery:Bool
     }
 type alias Cow =
     {
         position : Vector,
-        force: Vector,
+        velocity: Vector,
         mass: Float,
         wanderTarget: Vector 
     }
@@ -30,7 +31,7 @@ maxspeed = 12.0
 tileScale = Vector 3 3
 tileSize = Vector 80 80
 cowSize = 100
-someVector = Vector 0.1 0.1
+someVector = Vector 0.2 0.2
 mass = 0.6
 
 newModel:Model
@@ -38,12 +39,13 @@ newModel = Model
       (Window.Size 0 0) 
       100 
       (inSeconds 0)
-      (inSeconds 10000)
+      (inSeconds 20000)
       Nothing
       (Cow (Vector 20.0 20.0) someVector mass someVector)
       0.0
       0.0
       (Vector 0.0 0.0)
+      False
     
 type alias Lot = {id:Int, x:Int, y:Int}
 

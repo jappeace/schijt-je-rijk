@@ -16,5 +16,6 @@ toWorldAround agent_heading agent_side agent_position target_position =
   Matrix.transform
     (Matrix.multiply
       (Matrix.rotateAround agent_heading agent_side)
-      (Matrix.translate agent_position.x agent_position.y)) 
+      (Matrix.translate agent_position.x agent_position.y)
+    ) 
     target_position

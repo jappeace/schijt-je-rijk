@@ -4,10 +4,10 @@ import Matrix exposing (..)
 import Model exposing (..)
 import Transformation exposing (..)
 
-wanderRadius = Vector 4 4
-wanderTargetDistance = Vector 0 0
+wanderRadius = Vector 3 3
+wanderTargetDistance = Vector 1 0
 
-jitter = 2
+jitter = 3
 nextWanderTarget: Float -> Vector -> Float -> Float -> Vector
 nextWanderTarget time currentTarget rx ry = Vector.multiply
   wanderRadius
@@ -16,8 +16,8 @@ nextWanderTarget time currentTarget rx ry = Vector.multiply
     (currentTarget)
   ))
 wander: Vector -> Vector -> Vector -> Vector
-wander position force newTarget = let
+wander position velocity newTarget = let
     target = plus newTarget wanderTargetDistance
-    heading = normalize force
+    heading = normalize velocity
   in
-    (minus (toWorldAround heading (perpendicular heading) position target) position)
+    (minus (toWorld (angle velocity) position target) position)
