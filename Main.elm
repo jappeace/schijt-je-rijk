@@ -59,7 +59,18 @@ update msg model =
                 newTarget = nextWanderTarget model.tpf model.cow.wanderTarget randomx randomy
                 force = wander newTarget model.cow.force model.cow.position
                 tpf = (Vector (model.tpf * model.tpf) (model.tpf * model.tpf))
-                velocity = (Vector.truncate maxspeed (multiply tpf (divide force (Vector model.cow.mass model.cow.mass))))
+                velocity = (Vector.truncate maxspeed 
+                  (plus
+                    (multiply 
+                      tpf 
+                      (divide 
+                        force 
+                        (Vector model.cow.mass model.cow.mass)
+                      )
+                    )
+                    model.cow.force
+                  )
+                )
                 newCowPosition = modular (worldDimensions model.count) (plus model.cow.position velocity) 
                 nextTask = if model.remainingTime > 0 then Cmd.none else message SelectWinner
             in
@@ -145,7 +156,7 @@ render model =
             [gradient (linear (0, 0) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
             Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500))),
             lots,
-            (Collage.toForm (Element.image cowSize cowSize "img/cow.png"))
+            (Collage.rotate ((angle model.cow.force) + pi) (Collage.toForm (Element.image cowSize cowSize "img/cow.png")))
             ]
           )
         )
@@ -182,6 +193,7 @@ view model =
         ],
         h1 [] [text ("Schijt je rijk" ++ (toString model.remainingTime) ++ " -- cow pos" ++ (toString model.cow.position))],
         h1 [] [text ("force " ++ (toString model.cow.force))],
+        h1 [] [text ("angle " ++ (toString (((angle model.cow.force)*180) / pi)))],
         h1 [] [text ("target" ++ (toString model.cow.wanderTarget))],
         h1 [] [text ("time " ++ (toString model.tpf))],
         h1 [] [text ("rng" ++ (toString model.rng))]

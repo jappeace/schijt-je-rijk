@@ -2,12 +2,12 @@ module Steering exposing (wander, nextWanderTarget)
 import Vector exposing (..)
 import Matrix exposing (..)
 import Model exposing (..)
-import Transformation exposing (toWorld)
+import Transformation exposing (..)
 
-wanderRadius = Vector 3 3
-wanderTargetDistance = Vector 5 0
+wanderRadius = Vector 4 4
+wanderTargetDistance = Vector 0 0
 
-jitter = 1
+jitter = 2
 nextWanderTarget: Float -> Vector -> Float -> Float -> Vector
 nextWanderTarget time currentTarget rx ry = Vector.multiply
   wanderRadius
@@ -18,5 +18,6 @@ nextWanderTarget time currentTarget rx ry = Vector.multiply
 wander: Vector -> Vector -> Vector -> Vector
 wander position force newTarget = let
     target = plus newTarget wanderTargetDistance
+    heading = normalize force
   in
-    (minus (toWorld (angle force) position target) position )
+    (minus (toWorldAround heading (perpendicular heading) position target) position)

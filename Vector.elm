@@ -46,7 +46,7 @@ perpendicular: Vector -> Vector
 perpendicular vector = Vector (-vector.y) vector.x
 
 angle: Vector -> Float
-angle vec = atan2 vec.x vec.y
+angle vec = (atan2 vec.y vec.x)
 
 truncate: Float -> Vector -> Vector
 truncate max vector = if (length vector) > max 
