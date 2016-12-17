@@ -25,6 +25,14 @@ type alias Cow =
         mass: Float,
         wanderTarget: Vector 
     }
+
+maxspeed = 30.0
+tileScale = Vector 3 3
+tileSize = Vector 80 80
+cowSize = 100
+someVector = Vector 0.1 0.1
+mass = 0.1
+
 newModel:Model
 newModel = Model 
       (Window.Size 0 0) 
@@ -32,17 +40,12 @@ newModel = Model
       (inSeconds 0)
       (inSeconds 10000)
       Nothing
-      (Cow (Vector 20.0 20.0) someVector 0.001 someVector)
+      (Cow (Vector 20.0 20.0) someVector mass someVector)
       0.0
       0.0
       (Vector 0.0 0.0)
     
 type alias Lot = {id:Int, x:Int, y:Int}
-
-maxspeed = 3.0
-tileScale = Vector 3 3
-tileSize = Vector 80 80
-cowSize = 100
 
 screenTileSize = multiply tileSize tileScale
 
@@ -59,7 +62,6 @@ cowposToLot lotCount cowpos =
     lotCoords = applySingle (toFloat << floor) (divide (Vector (cowpos.x + (cowSize * 0.4) + tileSize.x) (cowpos.y+tileSize.y + (cowSize* 0.4))) tileSize)
   in
     Lot (worldDimSize * (floor lotCoords.x) + (floor lotCoords.y)) (floor lotCoords.x) (floor lotCoords.y)
-someVector = Vector 0.1 0.1
 
 calcDimension : Int -> Int
 calcDimension amount = (ceiling (sqrt (toFloat amount))) - 1

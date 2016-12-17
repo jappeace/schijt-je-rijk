@@ -38,16 +38,18 @@ length vector = sqrt (lengthSq vector)
 
 normalize: Vector -> Vector
 normalize vector = let
-      lsq = lengthSq vector
+      len = length vector
     in
-      -- cause both sides are sq I can do this... I think
-      Vector ((vector.x * vector.x)/lsq) ((vector.y * vector.y)/lsq)
+      Vector ((vector.x)/len) ((vector.y)/len)
 
 perpendicular: Vector -> Vector
 perpendicular vector = Vector (-vector.y) vector.x
 
+angle: Vector -> Float
+angle vec = atan2 vec.x vec.y
+
 truncate: Float -> Vector -> Vector
-truncate max vector = if (lengthSq vector) > max * max 
+truncate max vector = if (length vector) > max 
     then
       multiply (normalize vector) (Vector max max)
     else

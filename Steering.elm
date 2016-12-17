@@ -2,22 +2,21 @@ module Steering exposing (wander, nextWanderTarget)
 import Vector exposing (..)
 import Matrix exposing (..)
 import Model exposing (..)
-import Transformation exposing (toWorldAround)
+import Transformation exposing (toWorld)
 
-wanderRadius = Vector 5 5
-wanderTargetDistance = Vector (cowSize/16) 0
+wanderRadius = Vector 3 3
+wanderTargetDistance = Vector 5 0
 
 jitter = 1
-nextWanderTarget: Cow -> Float -> Float -> Vector
-nextWanderTarget cow rx ry = Vector.multiply
+nextWanderTarget: Float -> Vector -> Float -> Float -> Vector
+nextWanderTarget time currentTarget rx ry = Vector.multiply
   wanderRadius
   (normalize (plus 
-    (Vector (rx*jitter) (ry*jitter)) 
-    cow.wanderTarget
+    (Vector (rx*jitter*time) (ry*jitter*time)) 
+    (currentTarget)
   ))
-wander: Cow -> Float -> Float -> Vector
-wander cow rx ry = let
-    target = plus (nextWanderTarget cow rx ry) wanderTargetDistance
-    heading = (normalize cow.force)  
+wander: Vector -> Vector -> Vector -> Vector
+wander position force newTarget = let
+    target = plus newTarget wanderTargetDistance
   in
-    toWorldAround heading (perpendicular heading) cow.position target
+    (minus (toWorld (angle force) position target) position )

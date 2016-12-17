@@ -56,10 +56,11 @@ update msg model =
         StartLottery ->
             ( {model | remainingTime = model.lotteryDuration, winningLot = Nothing}, Cmd.none)
         PlayLottery (randomx, randomy) -> let
-                newTarget = wander model.cow randomx randomy
+                newTarget = nextWanderTarget model.tpf model.cow.wanderTarget randomx randomy
+                force = wander newTarget model.cow.force model.cow.position
                 tpf = (Vector (model.tpf * model.tpf) (model.tpf * model.tpf))
-                velocity = (Vector.truncate maxspeed (multiply tpf (divide newTarget (Vector model.cow.mass model.cow.mass))))
-                newCowPosition = (plus model.cow.position velocity) 
+                velocity = (Vector.truncate maxspeed (multiply tpf (divide force (Vector model.cow.mass model.cow.mass))))
+                newCowPosition = modular (worldDimensions model.count) (plus model.cow.position velocity) 
                 nextTask = if model.remainingTime > 0 then Cmd.none else message SelectWinner
             in
               ( {model | 
@@ -67,7 +68,7 @@ update msg model =
                     newCowPosition 
                     velocity
                     model.cow.mass
-                    (nextWanderTarget model.cow randomx randomy),
+                    newTarget,
                   rng = (Vector randomx randomy)
                 },  
                   nextTask
@@ -183,6 +184,6 @@ view model =
         h1 [] [text ("force " ++ (toString model.cow.force))],
         h1 [] [text ("target" ++ (toString model.cow.wanderTarget))],
         h1 [] [text ("time " ++ (toString model.tpf))],
-        h1 [] [text ("blah" ++ (toString model.rng))]
+        h1 [] [text ("rng" ++ (toString model.rng))]
       ]
   
