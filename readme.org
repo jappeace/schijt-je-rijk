@@ -1,9 +1,6 @@
 #+TITLE: Schijt je rijk
 
 * Te doen
-1. Beter wander gedrag.
-   1. Inclusief rotatie
-2. Daad werkelijk schijt
 3. Invoer formulier
 ** Extra
    1. Kamera die inzoemt en de koe volgt?
