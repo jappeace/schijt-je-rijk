@@ -19,7 +19,9 @@ import Time exposing (..)
 
 import Support exposing (..)
 import Vector exposing (..)
-import Transformation exposing (toWorldAround)
+import Model exposing (..)
+import Steering exposing (..)
+
 main =
     program 
       { init = init
@@ -28,60 +30,9 @@ main =
       , subscriptions = subscriptions
       }
 
--- Model
-
-type alias Model = 
-    { 
-      size : Window.Size,
-      count : Int ,
-      remainingTime: Time,
-      lotteryDuration: Time,
-      winningLot : Maybe Lot,
-      cow : Cow,
-      lastTime: Time,
-      tpf: Time 
-    }
-type alias Cow =
-    {
-        position : Vector,
-        force: Vector,
-        mass: Float,
-        wanderTarget: Vector 
-    }
-tileScale = Vector 3 3
-tileSize = Vector 80 80
-screenTileSize = multiply tileSize tileScale
-worldDimensions: Int -> Vector
-worldDimensions lotCount =
-  let 
-    scale = toFloat (calcDimension lotCount)
-  in 
-    multiply tileSize (Vector scale scale)
-cowposToLot : Int -> Vector -> Lot
-cowposToLot lotCount cowpos = 
-  let
-    worldDimSize = (calcDimension lotCount + 1)
-    lotCoords = applySingle (toFloat << floor) (divide (Vector (cowpos.x + (cowSize * 0.4) + tileSize.x) (cowpos.y+tileSize.y + (cowSize* 0.4))) tileSize)
-  in
-    Lot (worldDimSize * (floor lotCoords.x) + (floor lotCoords.y)) (floor lotCoords.x) (floor lotCoords.y)
-someVector = Vector 0.1 0.1
 init : ( Model, Cmd Msg )
-init =
-    (
-    (Model 
-      (Window.Size 0 0) 
-      100 
-      (inSeconds 0)
-      (inSeconds 10000)
-      Nothing
-      (Cow (Vector 20.0 20.0) someVector 0.0000001 someVector)
-      0.0
-      0.0
-    ), 
-    Task.perform (\x -> Resize x) Window.size )
+init = (newModel, Task.perform (\x -> Resize x) Window.size )
 
-wanderRadius = Vector 30 30
-wanderTargetDistance = Vector (cowSize/4) 0
 type Msg
     = Resize Window.Size
     | Fail
@@ -91,26 +42,9 @@ type Msg
     | SelectWinner
     | CowTick Time
 
-jitter = 10
-nextWanderTarget: Cow -> Float -> Float -> Vector
-nextWanderTarget cow rx ry = multiply
-  wanderRadius
-  (normalize (plus 
-    (Vector (rx*jitter) (ry*jitter)) 
-    cow.wanderTarget
-  ))
-wander: Cow -> Float -> Float -> Vector
-wander cow rx ry = let
-    target = plus (nextWanderTarget cow rx ry) wanderTargetDistance
-    heading = (normalize cow.force)  
-  in
-    toWorldAround heading (perpendicular heading) cow.position target
-
-type alias Lot = {id:Int, x:Int, y:Int}
 moveCow = Random.generate PlayLottery (Random.pair 
     (Random.float (-1) 1) (Random.float (-1) 1)
   )
-maxspeed = 3.0
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -133,7 +67,8 @@ update msg model =
                     newCowPosition 
                     velocity
                     model.cow.mass
-                    (nextWanderTarget model.cow randomx randomy)
+                    (nextWanderTarget model.cow randomx randomy),
+                  rng = (Vector randomx randomy)
                 },  
                   nextTask
               )
@@ -155,18 +90,8 @@ subscriptions model =
     Sub.batch [ 
       Window.resizes Resize,  
       Time.every second Tick,
-      Time.every (Time.second / 60) CowTick
+      Time.every (Time.second / 20) CowTick
     ]
-
-calcDimension : Int -> Int
-calcDimension amount = (ceiling (sqrt (toFloat amount))) - 1
-createLots : Int -> List Lot
-createLots amount = 
-  let 
-    scale = calcDimension amount
-    ranges = List.range 0 scale
-  in
-      flatMap (\row -> List.map (\col -> Lot (row * (scale+1) + col+1) row col) ranges ) ranges
 
 renderLot : Model -> Lot -> Form
 renderLot model lot = 
@@ -181,8 +106,6 @@ renderLot model lot =
       (Collage.move location
       (Collage.text (Text.fromString (toString lot.id))))
 
-
-cowSize = 100
 render : Model -> Html Msg
 render model = 
     let
@@ -259,6 +182,7 @@ view model =
         h1 [] [text ("Schijt je rijk" ++ (toString model.remainingTime) ++ " -- cow pos" ++ (toString model.cow.position))],
         h1 [] [text ("force " ++ (toString model.cow.force))],
         h1 [] [text ("target" ++ (toString model.cow.wanderTarget))],
-        h1 [] [text ("time " ++ (toString model.tpf))]
+        h1 [] [text ("time " ++ (toString model.tpf))],
+        h1 [] [text ("blah" ++ (toString model.rng))]
       ]
   
