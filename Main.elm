@@ -76,7 +76,6 @@ update msg model =
                   )
                 )
                 newCowPosition = modular (worldDimensions model.count) (plus model.cow.position velocity) 
-                runningLottery = model.remainingTime > 0
             in
               ( {model | 
                   cow = Cow
@@ -84,10 +83,9 @@ update msg model =
                     velocity
                     model.cow.mass
                     newTarget,
-                  rng = (Vector randomx randomy),
-                  runningLottery = runningLottery
+                  rng = (Vector randomx randomy)
                 },  
-                if runningLottery then Cmd.none else message SelectWinner
+                if model.remainingTime > 0 then Cmd.none else message SelectWinner
               )
         Tick _ ->
             ( {model | 
@@ -98,14 +96,28 @@ update msg model =
         CowTick tpf ->
             ({model | tpf = ((tpf - model.lastTime)/1000), lastTime = tpf}, if model.runningLottery then moveCow else Cmd.none)
         SelectWinner ->
-            ({model | 
-                winningLot = Maybe.Just (cowposToLot model.count model.cow.position),
-                cow = Cow
-                  model.cow.position
-                  model.rng
-                  model.cow.mass
-                  model.cow.wanderTarget
-              }, Cmd.none)
+            let
+                winner = (shitOnLot model.count model.cow)
+                newCow = Cow
+                    model.cow.position
+                    model.rng
+                    model.cow.mass
+                    model.cow.wanderTarget
+            in
+              if List.member winner model.passedWinners then
+                ({model | 
+                  cow = newCow,
+                  remainingTime = model.lotteryDuration * redoTimeFraction * (toFloat model.runAttempts),
+                  runAttempts = model.runAttempts + 1
+                }, Cmd.none)
+              else
+                ({model | 
+                    winningLot = Maybe.Just winner,
+                    cow = newCow,
+                    passedWinners = model.passedWinners ++ [winner],
+                    runAttempts = 1,
+                    runningLottery = False
+                  }, Cmd.none)
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -115,8 +127,8 @@ subscriptions model =
       Time.every (Time.second / 20) CowTick
     ]
 
-renderLot : Model -> Lot -> Form
-renderLot model lot = 
+renderLot : Form -> Lot -> Form
+renderLot withShape lot = 
     let
         location = (
           tileSize.x * ((toFloat lot.x)),
@@ -125,12 +137,10 @@ renderLot model lot =
           
     in
       Collage.scale 3
-      (Collage.move location
-      (Collage.text (Text.fromString (toString lot.id))))
+      (Collage.move location withShape)
 
 render : Model -> Html Msg
-render model = 
-    let
+render model = let
         width =
             model.size.width
 
@@ -145,36 +155,50 @@ render model =
 
         clrStops =
             [ ( 0.0, clrStart ), ( 1.0, clrEnd ) ]
-        lots = 
-          Collage.groupTransform
-          (Transform.multiply
+        -- move in oposite direction of cow
+        cowTransform = (Transform.multiply
             (Transform.scale 1)
             (Transform.translation -model.cow.position.x -model.cow.position.y)
           )
-          (List.filterMap 
-              (\lot -> 
-                (
-                  if lot.id > model.count then 
-                    Maybe.Nothing
+        lots = 
+          Collage.groupTransform
+            cowTransform
+              (List.filterMap 
+                (\lot -> 
+                  (if lot.id > model.count then 
+                      Maybe.Nothing
                   else 
-                    Maybe.Just (renderLot model lot))
-              ) 
+                    Maybe.Just (renderLot 
+                      (Collage.text (Text.fromString (toString lot.id)))
+                      lot 
+                    )
+                  )
+                )
               (createLots model.count)
-          )
+              ) 
+        shits = Collage.groupTransform cowTransform
+                (List.map (renderLot (Collage.moveY (-tileSize.y) (Collage.toForm (Element.image (floor (tileSize.x/2)) (floor (tileSize.y/2)) "img/shit.png"))))
+                     model.passedWinners
+                )
     in
-        toHtml (collage width height (
-            [gradient (linear (0, 0) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
-            Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500))),
-            lots,
-            (Collage.rotate ((angle model.cow.velocity) + pi) (Collage.toForm (Element.image cowSize cowSize "img/cow.png")))
-            ]
-          )
+      toHtml (collage width height (
+          [gradient (linear (0, 0) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
+          Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500))),
+          lots,
+          shits,
+          (Collage.rotate 
+            (cowAngle model.cow.velocity) 
+            (Collage.toForm 
+              (Element.image cowSize cowSize "img/cow.png")
+            ))
+          ]
         )
+      )
 
 view : Model -> Html Msg
 view model =
     let
-        visibility = if model.remainingTime > 0 then "none" else "block"
+        visibility = if model.runningLottery then "none" else "block"
     in
       body [] [
         render model,

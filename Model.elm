@@ -4,6 +4,7 @@ import Support exposing (..)
 import Vector exposing (..)
 import Time exposing (Time, inSeconds)
 import Window exposing (Size)
+import Transformation exposing (toWorld)
 -- Model
 
 type alias Model = 
@@ -17,7 +18,9 @@ type alias Model =
       lastTime: Time,
       tpf: Time,
       rng: Vector,
-      runningLottery:Bool
+      runningLottery:Bool,
+      passedWinners: List Lot,
+      runAttempts:Int
     }
 type alias Cow =
     {
@@ -33,19 +36,22 @@ tileSize = Vector 80 80
 cowSize = 100
 someVector = Vector 0.2 0.2
 mass = 0.6
+redoTimeFraction = 0.25 -- if we try to select an already won lot, how much extra time to move away? (as a fraction of the inputed time)
 
 newModel:Model
 newModel = Model 
       (Window.Size 0 0) 
       100 
       (inSeconds 0)
-      (inSeconds 20000)
+      (inSeconds 2000)
       Nothing
       (Cow (Vector 20.0 20.0) someVector mass someVector)
       0.0
       0.0
-      (Vector 0.0 0.0)
+      (Vector 0.1 0.0)
       False
+      []
+      1
     
 type alias Lot = {id:Int, x:Int, y:Int}
 
@@ -57,13 +63,16 @@ worldDimensions lotCount =
     scale = toFloat (calcDimension lotCount)
   in 
     multiply tileSize (Vector scale scale)
-cowposToLot : Int -> Vector -> Lot
-cowposToLot lotCount cowpos = 
+shitOnLot : Int -> Cow -> Lot
+shitOnLot lotCount cow = 
   let
     worldDimSize = (calcDimension lotCount + 1)
-    lotCoords = applySingle (toFloat << floor) (divide (Vector (cowpos.x + (cowSize * 0.4) + tileSize.x) (cowpos.y+tileSize.y + (cowSize* 0.4))) tileSize)
+    lotCoords = applySingle (toFloat << floor) (divide (Vector (cow.position.x + (tileSize.x*0.8)) (cow.position.y+tileSize.y + (cowSize* 0.4))) tileSize)
   in
     Lot (worldDimSize * (floor lotCoords.x) + (floor lotCoords.y)) (floor lotCoords.x) (floor lotCoords.y)
+
+cowAngle: Vector -> Float
+cowAngle velocity = (angle velocity) + pi
 
 calcDimension : Int -> Int
 calcDimension amount = (ceiling (sqrt (toFloat amount))) - 1
