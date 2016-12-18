@@ -1,9 +1,12 @@
 #+TITLE: Schijt je rijk
 
 * Te doen
-3. Invoer formulier
-** Extra
-   1. Kamera die inzoemt en de koe volgt?
++ artwork verkwerken van verenigng (weiland kan wel lijkt me)
+* Toekomstig werk
+  1. Kamera die inzoemt en de koe volgt?
+  2. Geluid
+  3. random tijd? (word als een beetje gedaan als er op een gebruikt vak word gescheten)
+  4. framerate verbeteren voor grotere nummers
 
 * Instel scherm
 + Tijd kunnen opgeven, bereik tussen de 5 en 60 seconden.
