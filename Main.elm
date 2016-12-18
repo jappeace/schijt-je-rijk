@@ -1,19 +1,13 @@
 -- elm-lang/core
 import Task
-import Color exposing (linear, rgb)
 import Random
 import Html exposing (..)
 import Html.Attributes
 import Html.Events
--- evancz/elm-graphics
-import Collage exposing (collage, gradient, rect, Form)
-import Element exposing (toHtml)
-import Transform
 
 -- elm-lang/window
 import Window exposing (..)
 
-import Text
 
 import Time exposing (..)
 
@@ -94,34 +88,42 @@ update msg model =
                 draftsleft = model.draftsLeft - 1
                 newCow = Cow
                     model.cow.position
-                    model.rng
+                    (divide model.cow.velocity (Vector 10 10))
                     model.cow.mass
-                    model.cow.wanderTarget
-            in
-              if List.member winner model.passedWinners then
-                ({model | 
+                    model.rng
+                tryAgainModel = {model | 
                   cow = newCow,
                   remainingTime = model.lotteryDuration * redoTimeFraction * (toFloat model.runAttempts),
                   runAttempts = model.runAttempts + 1
-                }, Cmd.none)
+                }
+            in
+              if List.member winner model.passedWinners then
+                (tryAgainModel, Cmd.none)
               else
-                ({model | 
-                    winningLot = Maybe.Just winner,
-                    cow = newCow,
-                    passedWinners = model.passedWinners ++ [winner],
-                    runAttempts = 1,
-                    runningLottery = False,
-                    draftsLeft = draftsleft, 
-                    showForm = draftsleft < 1
+                if winner.id > model.count then
+                  ({tryAgainModel | 
+                    passedWinners = (tryAgainModel.passedWinners ++ [winner])
                   }, Cmd.none)
+                else
+                  ({model | 
+                      winningLot = Maybe.Just winner,
+                      cow = newCow,
+                      passedWinners = model.passedWinners ++ [winner],
+                      runAttempts = 1,
+                      runningLottery = False,
+                      draftsLeft = draftsleft
+                    }, Cmd.none)
         FormLotCount count ->
             parseInput (\model x -> {model | count = x}) model count
         FormDraftCount drafts ->
             parseInput (\model x -> {model | draftsLeft = x}) model drafts
         FormTime time ->
-            parseInput (\model x -> {model | lotteryDuration = ((inSeconds (toFloat x)) * 1000.0)}) model time
+            parseInput (\model x -> {model | lotteryDuration = ((inSeconds ((toFloat x)* 1000.0)) )}) model time
         FormBegin ->
             ({model | showForm = False}, Cmd.none)
+        StopLottery ->
+            ({model | showForm = True}, Cmd.none)
+
 
 parseInput: (Model -> Int -> Model) -> Model -> String -> ( Model, Cmd Msg )
 parseInput func model input = Result.withDefault 
@@ -136,6 +138,26 @@ subscriptions model =
       Time.every (Time.second / 20) CowTick
     ]
 
+userput:  (String -> Msg) -> String -> String -> Html Msg
+userput msg string value = tr [] [
+                    td [] [
+                        text string
+                    ],
+                    td [
+                    ] [
+                      input [
+                        Html.Attributes.style [
+                             ("width", "200px"),
+                             ("padding", "10px")
+                        ],
+                        Html.Attributes.type_ "number", 
+                        Html.Attributes.placeholder string, 
+                        Html.Attributes.value (value),
+                        Html.Events.onInput msg] [
+                           
+                        ]
+                    ]
+                  ]
 view : Model -> Html Msg
 view model =
     if (not model.showForm) then
@@ -143,46 +165,19 @@ view model =
     else
         div [
              Html.Attributes.style [
-                  ("background", "green")
-            ]
+                  ("background", "green"),
+                  ("width", "30%"),
+                  ("position", "absolute"),
+                  ("left", "35%"),
+                  ("top", "35%"),
+                  ("padding", "10px"),
+                  ("border-radius", "10px"),
+                  ("border", "3px solid darkgreen")]
         ] [
              table [] [
-                  tr [] [
-                    td [] [
-                        text "Aantal loten"
-                    ],
-                    td [] [
-                      input [Html.Attributes.type_ "numeric", Html.Attributes.placeholder "Aantal loten", Html.Events.onInput FormLotCount] []
-                    ]
-                  ],
-                  tr [] [
-                    td [] [
-                        text "Aantal trekkingen"
-                    ],
-                    td [] [
-                      input [Html.Attributes.type_ "numeric", Html.Attributes.placeholder "Aantal trekkingen", Html.Events.onInput FormDraftCount] []
-                    ]
-                  ],
-                  tr [] [
-                    td [] [
-                        text "Tijd"
-                    ],
-                    td [
-                      Html.Attributes.style [
-                            ("background", "grey")
-                      ]
-                    ] [
-                      input [
-                        Html.Attributes.style [
-                             ("width", "100%")
-                        ],
-                        Html.Attributes.type_ "range", 
-                        Html.Attributes.max "60", 
-                        Html.Attributes.min "10", 
-                        Html.Attributes.step "2", 
-                        Html.Events.onInput FormTime] []
-                    ]
-                  ],
+                  userput FormLotCount "Aantal loten" (toString model.count),
+                  userput FormDraftCount "Aantal trekkingen" (toString model.draftsLeft),
+                  userput FormTime "Tijd seconden" (toString model.lotteryDuration ),
                   tr [] [
                     td [
                         Html.Attributes.colspan 2

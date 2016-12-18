@@ -19,12 +19,14 @@ type Msg
     | FormDraftCount String
     | FormTime String
     | FormBegin
+    | StopLottery
 
 type alias Model = 
     { 
       size : Window.Size,
       count : Int ,
       remainingTime: Time,
+      timeRange: (Time, Time),
       lotteryDuration: Time,
       winningLot : Maybe Lot,
       cow : Cow,
@@ -56,9 +58,10 @@ redoTimeFraction = 0.25 -- if we try to select an already won lot, how much extr
 newModel:Model
 newModel = Model 
       (Window.Size 0 0) 
-      100 
+      0 
       (inSeconds 0)
-      (inSeconds 20000)
+      (inSeconds 0, inSeconds 0)
+      (inSeconds 0)
       Nothing
       (Cow (Vector 20.0 20.0) someVector mass someVector)
       0.0

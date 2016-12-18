@@ -84,35 +84,49 @@ render model = let
         )
       )
 
+msgBox visibility elements = div [
+            Html.Attributes.style [
+              ("position", "absolute"), 
+              ("left", "40%"), 
+              ("top", "10%"), 
+              ("width", "20%"),
+              ("font-size", "40pt"),
+              ("font-family", "Comic Sans, Comic Sans MS"),
+              ("color", "white"),
+              ("background", "green"),
+              ("padding", "10px"),
+              ("border-radius", "10px"),
+              ("border", "3px solid darkgreen"),
+              ("text-align", "center"),
+              ("display", visibility)
+            ]
+          ] elements
+actionButton msg action = button [
+              Html.Events.onClick (action),
+              Html.Attributes.style [
+                ("width", "100%"),
+                ("backgound", "darkgrey"),
+                ("height", "100%"),
+                ("font-size", "inherit"),
+                ("font-family", "inherit")
+              ]
+            ] [text msg]
 lotteryView : Model -> Html Msg
 lotteryView model =
     let
+        winnertxt = text (Maybe.withDefault "" (Maybe.map (\x -> (toString x.id) ++ " wint") model.winningLot))
         visibility = if model.runningLottery then "none" else "block"
+        someButton = if model.draftsLeft < 1 then (
+          actionButton "Einde!" StopLottery
+        ) else (
+          actionButton "Begin trekking!" StartLottery
+        )
     in
       div [Html.Attributes.id "lottery"] [
         render model,
-        div [
-          Html.Attributes.style [
-            ("position", "absolute"), 
-            ("left", "40%"), 
-            ("top", "20%"), 
-            ("width", "20%"),
-            ("height", "20%"),
-            ("font-size", "40pt"),
-            ("font-family", "Comic Sans, Comic Sans MS")
-          ]
-        ] [
-          button [
-            Html.Events.onClick (StartLottery),
-            Html.Attributes.style [
-              ("width", "100%"),
-              ("height", "100%"),
-              ("display", visibility),
-              ("font-size", "inherit"),
-              ("font-family", "inherit")
-            ]
-          ] [text "Begin trekking!"],
-          text (Maybe.withDefault "" (Maybe.map (\x -> "de winnaar is " ++ (toString x.id)) model.winningLot))
+        msgBox visibility [
+          someButton,
+          winnertxt
         ]
       ]
-  
+
