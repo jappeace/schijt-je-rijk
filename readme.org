@@ -1,0 +1,22 @@
+#+TITLE: Schijt je rijk
+
+* Te doen
++ artwork verkwerken van verenigng (weiland kan wel lijkt me)
+* Toekomstig werk
+  1. Kamera die inzoemt en de koe volgt?
+  2. Geluid
+  3. random tijd? (word als een beetje gedaan als er op een gebruikt vak word gescheten)
+  4. framerate verbeteren voor grotere nummers
+
+* Instel scherm
++ Tijd kunnen opgeven, bereik tussen de 5 en 60 seconden.
++ Aantal vakjes/lootjes kunnen invullen
++ Aantal trekkingen??
+
+* Loting
++ Begin met het laten zien van een start knop, na een winnaar te hebben gekozen kom je hier weer op terug todat er aantal trekkingen zijn geweest
++ Koe mag niet 2x op hetzelfde lootje schijten
++ Weergave van het winnende nummer moet goed leesbaar zijn in de zaal
+  + Koe in het midden houden zodat de vakjes goed leesbaar zijn.
++ Achtergrond moet tenminste groen zijn.
+  + Voetbal veld zou beter zijn
