@@ -7,6 +7,19 @@ import Window exposing (Size)
 import Transformation exposing (toWorld)
 -- Model
 
+type Msg
+    = Resize Window.Size
+    | Fail
+    | StartLottery
+    | PlayLottery (Float, Float)
+    | Tick Time
+    | SelectWinner
+    | CowTick Time
+    | FormLotCount String
+    | FormDraftCount String
+    | FormTime String
+    | FormBegin
+
 type alias Model = 
     { 
       size : Window.Size,
@@ -20,7 +33,9 @@ type alias Model =
       rng: Vector,
       runningLottery:Bool,
       passedWinners: List Lot,
-      runAttempts:Int
+      runAttempts:Int,
+      draftsLeft:Int,
+      showForm:Bool
     }
 type alias Cow =
     {
@@ -43,7 +58,7 @@ newModel = Model
       (Window.Size 0 0) 
       100 
       (inSeconds 0)
-      (inSeconds 2000)
+      (inSeconds 20000)
       Nothing
       (Cow (Vector 20.0 20.0) someVector mass someVector)
       0.0
@@ -52,6 +67,8 @@ newModel = Model
       False
       []
       1
+      0
+      True
     
 type alias Lot = {id:Int, x:Int, y:Int}
 

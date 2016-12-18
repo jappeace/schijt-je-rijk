@@ -21,6 +21,8 @@ import Support exposing (..)
 import Vector exposing (..)
 import Model exposing (..)
 import Steering exposing (..)
+import ParseInt
+import LotteryView exposing (lotteryView)
 
 main =
     program 
@@ -32,15 +34,6 @@ main =
 
 init : ( Model, Cmd Msg )
 init = (newModel, Task.perform (\x -> Resize x) Window.size )
-
-type Msg
-    = Resize Window.Size
-    | Fail
-    | StartLottery
-    | PlayLottery (Float, Float)
-    | Tick Time
-    | SelectWinner
-    | CowTick Time
 
 moveCow = Random.generate PlayLottery (Random.pair 
     (Random.float (-1) 1) (Random.float (-1) 1)
@@ -98,6 +91,7 @@ update msg model =
         SelectWinner ->
             let
                 winner = (shitOnLot model.count model.cow)
+                draftsleft = model.draftsLeft - 1
                 newCow = Cow
                     model.cow.position
                     model.rng
@@ -116,9 +110,24 @@ update msg model =
                     cow = newCow,
                     passedWinners = model.passedWinners ++ [winner],
                     runAttempts = 1,
-                    runningLottery = False
+                    runningLottery = False,
+                    draftsLeft = draftsleft, 
+                    showForm = draftsleft < 1
                   }, Cmd.none)
+        FormLotCount count ->
+            parseInput (\model x -> {model | count = x}) model count
+        FormDraftCount drafts ->
+            parseInput (\model x -> {model | draftsLeft = x}) model drafts
+        FormTime time ->
+            parseInput (\model x -> {model | lotteryDuration = ((inSeconds (toFloat x)) * 1000.0)}) model time
+        FormBegin ->
+            ({model | showForm = False}, Cmd.none)
 
+parseInput: (Model -> Int -> Model) -> Model -> String -> ( Model, Cmd Msg )
+parseInput func model input = Result.withDefault 
+  (model, Cmd.none)
+  (Result.map 
+    (\x -> (func model x, Cmd.none)) (ParseInt.parseInt input))
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch [ 
@@ -127,109 +136,63 @@ subscriptions model =
       Time.every (Time.second / 20) CowTick
     ]
 
-renderLot : Form -> Lot -> Form
-renderLot withShape lot = 
-    let
-        location = (
-          tileSize.x * ((toFloat lot.x)),
-          tileSize.y * (toFloat lot.y) 
-        )
-          
-    in
-      Collage.scale 3
-      (Collage.move location withShape)
-
-render : Model -> Html Msg
-render model = let
-        width =
-            model.size.width
-
-        height =
-            model.size.height
-
-        clrStart =
-            rgb 5 250 140
-
-        clrEnd =
-            rgb 231 59 87
-
-        clrStops =
-            [ ( 0.0, clrStart ), ( 1.0, clrEnd ) ]
-        -- move in oposite direction of cow
-        cowTransform = (Transform.multiply
-            (Transform.scale 1)
-            (Transform.translation -model.cow.position.x -model.cow.position.y)
-          )
-        lots = 
-          Collage.groupTransform
-            cowTransform
-              (List.filterMap 
-                (\lot -> 
-                  (if lot.id > model.count then 
-                      Maybe.Nothing
-                  else 
-                    Maybe.Just (renderLot 
-                      (Collage.text (Text.fromString (toString lot.id)))
-                      lot 
-                    )
-                  )
-                )
-              (createLots model.count)
-              ) 
-        shits = Collage.groupTransform cowTransform
-                (List.map (renderLot (Collage.moveY (-tileSize.y) (Collage.toForm (Element.image (floor (tileSize.x/2)) (floor (tileSize.y/2)) "img/shit.png"))))
-                     model.passedWinners
-                )
-    in
-      toHtml (collage width height (
-          [gradient (linear (0, 0) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
-          Collage.move (100.0, 300.0) (gradient (linear ( 200, 0 ) (toFloat width, toFloat height) (List.reverse clrStops)) (rect (toFloat width/2) (toFloat height-500))),
-          lots,
-          shits,
-          (Collage.rotate 
-            (cowAngle model.cow.velocity) 
-            (Collage.toForm 
-              (Element.image cowSize cowSize "img/cow.png")
-            ))
-          ]
-        )
-      )
-
 view : Model -> Html Msg
 view model =
-    let
-        visibility = if model.runningLottery then "none" else "block"
-    in
-      body [] [
-        render model,
+    if (not model.showForm) then
+        lotteryView model
+    else
         div [
-          Html.Attributes.style [
-            ("position", "absolute"), 
-            ("left", "40%"), 
-            ("top", "20%"), 
-            ("width", "20%"),
-            ("height", "20%"),
-            ("font-size", "40pt"),
-            ("font-family", "Comic Sans, Comic Sans MS")
-          ]
-        ] [
-          button [
-            Html.Events.onClick (StartLottery),
-            Html.Attributes.style [
-              ("width", "100%"),
-              ("height", "100%"),
-              ("display", visibility),
-              ("font-size", "inherit"),
-              ("font-family", "inherit")
+             Html.Attributes.style [
+                  ("background", "green")
             ]
-          ] [text "Begin trekking!"],
-          text (Maybe.withDefault "" (Maybe.map (\x -> "de winnaar is " ++ (toString x.id)) model.winningLot))
-        ],
-        h1 [] [text ("Schijt je rijk" ++ (toString model.remainingTime) ++ " -- cow pos" ++ (toString model.cow.position))],
-        h1 [] [text ("force " ++ (toString model.cow.velocity))],
-        h1 [] [text ("angle " ++ (toString (((angle model.cow.velocity)*180) / pi)))],
-        h1 [] [text ("target" ++ (toString model.cow.wanderTarget))],
-        h1 [] [text ("time " ++ (toString model.tpf))],
-        h1 [] [text ("rng" ++ (toString model.rng))]
-      ]
-  
+        ] [
+             table [] [
+                  tr [] [
+                    td [] [
+                        text "Aantal loten"
+                    ],
+                    td [] [
+                      input [Html.Attributes.type_ "numeric", Html.Attributes.placeholder "Aantal loten", Html.Events.onInput FormLotCount] []
+                    ]
+                  ],
+                  tr [] [
+                    td [] [
+                        text "Aantal trekkingen"
+                    ],
+                    td [] [
+                      input [Html.Attributes.type_ "numeric", Html.Attributes.placeholder "Aantal trekkingen", Html.Events.onInput FormDraftCount] []
+                    ]
+                  ],
+                  tr [] [
+                    td [] [
+                        text "Tijd"
+                    ],
+                    td [
+                      Html.Attributes.style [
+                            ("background", "grey")
+                      ]
+                    ] [
+                      input [
+                        Html.Attributes.style [
+                             ("width", "100%")
+                        ],
+                        Html.Attributes.type_ "range", 
+                        Html.Attributes.max "60", 
+                        Html.Attributes.min "10", 
+                        Html.Attributes.step "2", 
+                        Html.Events.onInput FormTime] []
+                    ]
+                  ],
+                  tr [] [
+                    td [
+                        Html.Attributes.colspan 2
+                    ] [
+                      button [
+                        Html.Events.onClick FormBegin
+                      ] [
+                         text "Begin"
+                      ]
+                    ]
+                  ]
+              ]
+        ]
