@@ -105,7 +105,6 @@ msgBox visibility elements = div [
               ("top", "10%"), 
               ("width", "20%"),
               ("font-size", "40pt"),
-              ("font-family", "Comic Sans, Comic Sans MS"),
               ("color", "white"),
               ("background", "green"),
               ("padding", "10px"),
@@ -115,15 +114,15 @@ msgBox visibility elements = div [
               ("display", visibility)
             ]
           ] elements
-actionButton msg action = button [
+actionButton msg action = img [
               Html.Events.onClick (action),
               Html.Attributes.style [
                 ("width", "100%"),
-                ("backgound", "darkgrey"),
                 ("height", "100%"),
                 ("font-size", "inherit"),
                 ("font-family", "inherit")
-              ]
+              ],
+              Html.Attributes.src "img/button.png"
             ] [text msg]
 lotteryView : Model -> Html Msg
 lotteryView model =
