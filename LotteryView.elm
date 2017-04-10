@@ -54,14 +54,6 @@ render model = let
         height =
             model.size.height
 
-        clrStart =
-            rgb 5 250 140
-
-        clrEnd =
-            rgb 231 59 87
-
-        clrStops =
-            [ ( 0.0, clrStart ), ( 1.0, clrEnd ) ]
         -- move in oposite direction of cow
         cowTransform = (Transform.multiply
             (Transform.scale 1)
@@ -87,16 +79,21 @@ render model = let
                 (List.map (renderLot (Collage.moveY (-tileSize.y) (Collage.toForm (Element.image (floor (tileSize.x/2)) (floor (tileSize.y/2)) "img/shit.png"))))
                      model.passedWinners
                 )
+        background = Collage.toForm (Element.image width height "img/background.png")
+        backgroundColor = Collage.filled Color.darkGreen (Collage.rect (toFloat width) (toFloat height))
     in
       toHtml (collage width height (
-          [gradient (linear (0, 0) (toFloat width, toFloat height) clrStops) (rect (toFloat width) (toFloat height)),
+          [
+          backgroundColor,
+          Collage.groupTransform cowTransform [background],
           lots,
           shits,
           (Collage.rotate 
             (cowAngle model.cow.velocity) 
+            (Collage.rotate (degrees cowInitialRotation)
             (Collage.toForm 
               (Element.image cowSize cowSize "img/cow.png")
-            ))
+            )))
           ]
         )
       )

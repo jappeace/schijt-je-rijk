@@ -5,12 +5,12 @@
   start trekking
 + Start trekking en dan  een filmpje (1).
 + Na filmpje sportveld in zicht met koeien
-+ Start knop op de kantine
++ +Start knop op de kantine+ er is geen kantine
 + Loopt nog wat snel
-+ Koe over het scherm lopen ipv anders om.
++ Koe over het scherm lopen ipv anders om. (*)
 + Voor honderd loten veld vullend zijn.
 + Aantal trekking eruit, en controle van dubbel schijt weghalen & oneindig
-  doorloepen op een trekking.
+  doorloepen op een trekking. (*)
 * Toekomstig werk
   1. Kamera die inzoemt en de koe volgt?
   2. Geluid

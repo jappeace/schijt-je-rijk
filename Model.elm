@@ -72,6 +72,8 @@ someVector = Vector 0.2 0.2
 mass = 0.6
 redoTimeFraction = 0.25 -- if we try to select an already won lot, how much extra time to move away? (as a fraction of the inputed time)
 
+cowInitialRotation = 60 -- degrees
+
 newModel:Model
 newModel = Model 
       (Window.Size 0 0) 
