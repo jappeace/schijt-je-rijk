@@ -64,7 +64,7 @@ type alias Cow =
         wanderTarget: Vector 
     }
 
-maxspeed = 12.0
+maxspeed = 6.0
 tileScale = Vector 3 3
 tileSize = Vector 80 80
 cowSize = 100

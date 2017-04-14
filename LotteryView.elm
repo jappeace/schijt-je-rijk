@@ -68,7 +68,7 @@ render model = let
                       Maybe.Nothing
                   else 
                     Maybe.Just (renderLot 
-                      (Collage.text (Text.fromString (toString lot.id)))
+                      (Collage.text ( Text.color Color.white (Text.fromString (toString lot.id))))
                       lot 
                     )
                   )
@@ -79,7 +79,7 @@ render model = let
                 (List.map (renderLot (Collage.moveY (-tileSize.y) (Collage.toForm (Element.image (floor (tileSize.x/2)) (floor (tileSize.y/2)) "img/shit.png"))))
                      model.passedWinners
                 )
-        background = Collage.toForm (Element.image width height "img/background.png")
+        background = (Collage.toForm (Element.image (width*2) (height*2) "img/background.png"))
         backgroundColor = Collage.filled Color.darkGreen (Collage.rect (toFloat width) (toFloat height))
     in
       toHtml (collage width height (
