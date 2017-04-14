@@ -117,8 +117,7 @@ msgBox visibility elements = div [
 actionButton msg action = img [
               Html.Events.onClick (action),
               Html.Attributes.style [
-                ("width", "100%"),
-                ("height", "100%"),
+                ("width", "35%"),
                 ("font-size", "inherit"),
                 ("font-family", "inherit")
               ],
@@ -127,7 +126,10 @@ actionButton msg action = img [
 lotteryView : Model -> Html Msg
 lotteryView model =
     let
-        winnertxt = text (Maybe.withDefault "" (Maybe.map (\x -> (toString x.id) ++ " wint") model.winningLot))
+        winnertxt = 
+          div [Html.Attributes.style [("width", "100%"), ("display", "block")]] [
+          text (Maybe.withDefault "" (Maybe.map (\x -> (toString x.id) ++ " wint") model.winningLot))
+              ]
         visibility = if model.runningLottery then "none" else "block"
         someButton = if model.draftsLeft < 1 then (
           actionButton "Einde!" StopLottery
