@@ -1,5 +1,6 @@
 #+TITLE: Schijt je rijk
 
+
 * Geimplementeerd functies
 + Begin met het laten zien van een start knop, na een winnaar te hebben gekozen kom je hier weer op terug todat er aantal trekkingen zijn geweest
 + Koe mag niet 2x op hetzelfde lootje schijten
@@ -12,6 +13,7 @@
 + Tijd kunnen opgeven, bereik tussen de 5 en 60 seconden.
 + Aantal vakjes/lootjes kunnen invullen
 + Aantal trekkingen??
+
 * Bouw instructies
 [[https://guide.elm-lang.org/install.html][Installeer elm:]]
 
@@ -32,6 +34,16 @@ in de browser opent:
   "cx" 'elm-preview-main
 )
 #+END_SRC
+
+* Configuratie
+De meeste standaard waarden zijn in Model.elm gedefnieert
+** Gedrag koe
+Voor de koe projecteren we een circel met een punt er in,
+het punt beweegt random op de circel heen en weer en de koe volgt dit punt.
+
+Deze variabelen zijn gedefinieert in Steering.elm
+Daarnaast is er een maximale snelheid gedefinieert in Model.elm
+
 * Te doen
 ** Recent
 + Start trekking en dan  een filmpje (1).

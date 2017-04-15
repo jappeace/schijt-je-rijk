@@ -22,9 +22,9 @@ import Model exposing (..)
 import Transformation exposing (..)
 
 wanderRadius = Vector 3 3
-wanderTargetDistance = Vector 10 0
+wanderTargetDistance = Vector 5 0
 
-jitter = 3
+jitter = 1
 nextWanderTarget: Float -> Vector -> Float -> Float -> Vector
 nextWanderTarget time currentTarget rx ry = Vector.multiply
   wanderRadius
