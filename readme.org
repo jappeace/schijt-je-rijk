@@ -1,28 +1,6 @@
 #+TITLE: Schijt je rijk
 
-* Te doen
-+ In het midden een lucht foto van het sportveld met in het midden een knop
-  start trekking
-+ Start trekking en dan  een filmpje (1).
-+ Na filmpje sportveld in zicht met koeien
-+ +Start knop op de kantine+ er is geen kantine
-+ Loopt nog wat snel
-+ Koe over het scherm lopen ipv anders om. (*)
-+ Voor honderd loten veld vullend zijn.
-+ Aantal trekking eruit, en controle van dubbel schijt weghalen & oneindig
-  doorloepen op een trekking. (*)
-* Toekomstig werk
-  1. Kamera die inzoemt en de koe volgt?
-  2. Geluid
-  3. random tijd? (word als een beetje gedaan als er op een gebruikt vak word gescheten)
-  4. framerate verbeteren voor grotere nummers
-
-* Instel scherm
-+ Tijd kunnen opgeven, bereik tussen de 5 en 60 seconden.
-+ Aantal vakjes/lootjes kunnen invullen
-+ Aantal trekkingen??
-
-* Loting
+* Geimplementeerd functies
 + Begin met het laten zien van een start knop, na een winnaar te hebben gekozen kom je hier weer op terug todat er aantal trekkingen zijn geweest
 + Koe mag niet 2x op hetzelfde lootje schijten
 + Weergave van het winnende nummer moet goed leesbaar zijn in de zaal
@@ -30,3 +8,40 @@
 + Achtergrond moet tenminste groen zijn.
   + Voetbal veld zou beter zijn
 
+** Instel scherm
++ Tijd kunnen opgeven, bereik tussen de 5 en 60 seconden.
++ Aantal vakjes/lootjes kunnen invullen
++ Aantal trekkingen??
+* Bouw instructies
+[[https://guide.elm-lang.org/install.html][Installeer elm:]]
+
+#+BEGIN_SRC sh
+  npm install elm
+#+END_SRC
+
+Om het project te bouwen gebruik elm make.
+#+BEGIN_SRC sh
+  elm-make Main.elm --output=main.html
+#+END_SRC
+
+Zelf gebruik is spacemacs met de elm layer
+en bind ik de toets combinatie `spatie,m,c,x` aan bouwen wat ook een nieuw tab
+in de browser opent:
+#+BEGIN_SRC emacs-lisp
+(spacemacs/set-leader-keys-for-major-mode 'elm-mode
+  "cx" 'elm-preview-main
+)
+#+END_SRC
+* Te doen
+** Recent
++ Start trekking en dan  een filmpje (1).
++ Na filmpje sportveld in zicht met koeien
++ Koe over het scherm lopen ipv anders om. (*)
++ Voor honderd loten veld vullend zijn. (*)
++ Aantal trekking eruit, en controle van dubbel schijt weghalen & oneindig
+  doorloepen op een trekking. (*)
+** Eerdere suggesties
+  1. Kamera die inzoemt en de koe volgt?
+  2. Geluid
+  3. random tijd? (word als een beetje gedaan als er op een gebruikt vak word gescheten)
+  4. framerate verbeteren voor grotere nummers
