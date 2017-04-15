@@ -175,12 +175,7 @@ userput msg string value = tr [] [
                         ]
                     ]
                   ]
-view : Model -> Html Msg
-view model =
-    if (not model.showForm) then
-        lotteryView model
-    else
-        div [
+mainForm model = div [
              Html.Attributes.style [
                   ("background", "green"),
                   ("width", "30%"),
@@ -208,3 +203,43 @@ view model =
                   ]
               ]
         ]
+branding = footer [
+            Html.Attributes.style [
+                  ("width", "100%"),
+                  ("text-align", "center"),
+                  ("position", "absolute"),
+                  ("top", "95%"),
+                  ("height", "5%")
+            ]] 
+          [small [] [
+            text "Copyright ",
+            a [Html.Attributes.href "https://jappieklooster.nl/"] [text "Jappie Klooster"],
+            text ", door ",
+            a [Html.Attributes.href "http://pinguin.work/"] [
+              text "Pinguin ",
+              img [
+                Html.Attributes.src "./img/logo.png",
+                Html.Attributes.style [
+                      ("width", "1em"),
+                      ("vertical-align", "bottom")
+                ]
+              ] [],
+              text " Programeurs"
+            ],
+            text ". Onder licentie van ",
+            a [Html.Attributes.href "https://github.com/jappeace/schijt-je-rijk/blob/master/LICENSE"] [text "GPLv3"],
+            text ". De broncode is ",
+            a [Html.Attributes.href "https://github.com/jappeace/schijt-je-rijk"] [text "hier beschikbaar"]
+          ]
+          ]
+
+view : Model -> Html Msg
+view model =
+    if (not model.showForm) then
+        lotteryView model
+    else
+        div [] [
+          mainForm model,
+          branding
+        ]
+        
