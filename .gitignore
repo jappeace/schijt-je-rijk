@@ -2,6 +2,7 @@
 *.iml
 *.iws
 *.eml
+*.swp
 out/
 .DS_Store
 .svn
@@ -14,3 +15,6 @@ js/reveal.min.js
 
 *.js
 elm-stuff
+
+release
+release.tar.gz
