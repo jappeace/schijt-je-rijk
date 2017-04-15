@@ -47,7 +47,7 @@ Daarnaast is er een maximale snelheid gedefinieert in Model.elm
 * Te doen
 ** Recent
 + Start trekking en dan  een filmpje.
-+ Na filmpje sportveld in zicht met koeien.
+  Na filmpje sportveld in zicht met koeien.
 + Koe over het scherm lopen ipv anders om.
 + Voor honderd loten veld vullend zijn.
 + Aantal trekking eruit, en controle van dubbel schijt weghalen & oneindig
