@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 
 mkdir release
 cp -R img release/img
