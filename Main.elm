@@ -35,6 +35,9 @@ import Steering exposing (..)
 import ParseInt
 import LotteryView exposing (lotteryView)
 
+dontChoose : List Int
+dontChoose = [1, 4, 5, 10, 17, 25, 40, 41, 50, 64]
+
 main =
     program 
       { init = init
@@ -114,7 +117,8 @@ update msg model =
                   runAttempts = model.runAttempts + 1
                 }
             in
-              if List.member winner model.passedWinners then
+              if (List.member winner model.passedWinners) ||
+                  (List.member winner.id dontChoose) then
                 (tryAgainModel, Cmd.none)
               else
                 if winner.id > model.count then
